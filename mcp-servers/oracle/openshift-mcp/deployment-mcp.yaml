@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oracle-mcp-server
+  labels:
+    app: oracle-mcp-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: oracle-mcp-server
+  template:
+    metadata:
+      labels:
+        app: oracle-mcp-server
+    spec:
+      containers:
+      - name: oracle-mcp-server
+        image: quay.io/lrangine/oracle-mcp-server:3.0.5
+        imagePullPolicy: Always
+        env:
+        - name: FLASK_ENV
+          value: "production"
+        - name: PYTHONPATH
+          value: "/usr/local/lib/python3.11/site-packages"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        # For MCP server, we don't need HTTP probes
+        # The server communicates via stdio
+      restartPolicy: Always

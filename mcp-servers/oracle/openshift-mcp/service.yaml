@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: oracle-mcp-server
+  labels:
+    app: oracle-mcp-server
+spec:
+  type: ClusterIP
+  ports:
+  - port: 9000
+    targetPort: 9000
+    name: http
+    protocol: TCP
+  selector:
+    app: oracle-mcp-server

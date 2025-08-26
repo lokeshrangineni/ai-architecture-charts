@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oracle-mcp-server
+  labels:
+    app: oracle-mcp-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: oracle-mcp-server
+  template:
+    metadata:
+      labels:
+        app: oracle-mcp-server
+    spec:
+      containers:
+      - name: oracle-mcp-server
+        image: quay.io/lrangine/oracle-mcp-server:3.0.5
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 9000
+          name: http
+          protocol: TCP
+        env:
+        - name: FLASK_ENV
+          value: "production"
+        - name: PORT
+          value: "9000"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 9000
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 9000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+      restartPolicy: Always

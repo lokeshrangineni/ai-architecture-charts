@@ -1,0 +1,55 @@
+# Oracle MCP Server Container
+FROM python:3.11-slim
+
+# Set labels
+LABEL maintainer="Oracle MCP Server"
+LABEL description="Oracle MCP Server with SQLcl integration"
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    default-jdk \
+    curl \
+    unzip \
+    procps \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies as root
+RUN pip3 install flask
+
+# Set environment variables
+ENV JAVA_HOME=/usr/lib/jvm/default-java
+ENV PATH=$JAVA_HOME/bin:$PATH
+ENV CLASSPATH=/opt/oracle/sqlcl/lib/*
+ENV PYTHONPATH=/usr/local/lib/python3.11/site-packages
+
+# Create oracle user
+RUN useradd -r -s /bin/bash oracle && \
+    mkdir -p /opt/oracle && \
+    chown -R oracle:oracle /opt/oracle
+
+# Copy MCP server files as root
+COPY mcp_server.py /opt/oracle/
+COPY mcp_http_server.py /opt/oracle/
+COPY mcp_http_server_debug.py /opt/oracle/
+COPY mcp_http_server_prod.py /opt/oracle/
+COPY mcp_http_server_simple.py /opt/oracle/
+
+# Set permissions and ownership
+RUN chmod +x /opt/oracle/mcp_server.py && \
+    chown oracle:oracle /opt/oracle/*.py
+
+# Switch to oracle user
+USER oracle
+WORKDIR /opt/oracle
+
+# Download and install Oracle SQLcl
+RUN curl -L -o sqlcl-latest.zip https://download.oracle.com/otn_software/java/sqldeveloper/sqlcl-latest.zip && \
+    unzip sqlcl-latest.zip && \
+    rm sqlcl-latest.zip && \
+    chmod +x sqlcl/bin/sql
+
+# Expose port for HTTP MCP server (if needed for debugging)
+EXPOSE 9000
+
+# Start Oracle MCP Server directly (stdio mode)
+CMD ["/usr/local/bin/python3", "/opt/oracle/mcp_server.py"]
