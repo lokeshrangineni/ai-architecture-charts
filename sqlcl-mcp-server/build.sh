@@ -6,13 +6,13 @@ set -e
 
 # Configuration
 IMAGE_NAME="sqlcl-mcp-server"
-TAG="1.0.0"
+TAG="2.5.0"
 QUAY_REPO="quay.io/lrangine"
 
-echo "Building SQLcl MCP Server..."
+echo "Building SQLcl MCP Server with verbose logging..."
 
-# Build the container image
-docker build -t ${IMAGE_NAME}:${TAG} .
+# Build the container image for x86_64 architecture
+docker build --platform linux/amd64 -t ${IMAGE_NAME}:${TAG} .
 
 # Tag for Quay.io
 docker tag ${IMAGE_NAME}:${TAG} ${QUAY_REPO}/${IMAGE_NAME}:${TAG}

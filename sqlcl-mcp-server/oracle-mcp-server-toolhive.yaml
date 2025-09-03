@@ -1,0 +1,42 @@
+apiVersion: toolhive.stacklok.dev/v1alpha1
+kind: MCPServer
+metadata:
+  name: oracle-mcp-server
+  namespace: loki-toolhive-oracle-mcp
+spec:
+  image: quay.io/lrangine/sqlcl-mcp-server:2.3.0
+  permissionProfile:
+    name: network
+    type: builtin
+  podTemplateSpec:
+    metadata: {}
+    spec:
+      containers:
+      - name: mcp
+        image: quay.io/lrangine/sqlcl-mcp-server:2.3.0
+        env:
+        - name: ORACLE_USER
+          value: "oracle23ai"
+        - name: ORACLE_PASSWORD
+          value: "tkX3fNXqGi1Vs3Bm7E6Ne063d"
+        - name: ORACLE_CONNECTION_STRING
+          value: "oracle23ai.arhkp-oracle-db-tpcds-loader:1521/FREEPDB1"
+        - name: CONNECTION_NAME
+          value: "oracle_connection_demo"
+
+
+        # Custom image has MCP server as entry point
+        resources:
+          requests:
+            cpu: 500m
+            memory: 512Mi
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+        securityContext: 
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+  port: 8080
+  transport: stdio
