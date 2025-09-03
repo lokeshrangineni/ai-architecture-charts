@@ -31,8 +31,6 @@ Cursor IDE → Bridge Script → Port-Forward → Toolhive Proxy → Oracle MCP 
 | `build.sh` | Script to build and push the container image |
 | `oracle-mcp-server-toolhive.yaml` | **Main Toolhive CRD** - defines the MCP server |
 | `toolhive-oracle-scc.yaml` | Security Context Constraints for OpenShift |
-| `openshift-deployment.yaml` | Alternative Kubernetes deployment (without Toolhive) |
-| `cursor-toolhive-bridge.sh` | Bridge script for Cursor IDE integration |
 | `README.md` | This documentation |
 
 ## 🚀 **Prerequisites**
@@ -153,51 +151,70 @@ oc port-forward svc/mcp-oracle-mcp-server-proxy 8081:8080 &
 curl -s http://localhost:8081/sse | head -3
 ```
 
-## 🔧 **Cursor IDE Integration**
+## 🧪 **Test with MCP Inspector**
 
-### **Step 1: Set Up Port Forward**
+You can use MCP Inspector to interactively test the MCP server over HTTP via the Toolhive proxy.
 
-```bash
-# Forward Toolhive proxy to local port
-oc port-forward svc/mcp-oracle-mcp-server-proxy 8081:8080 -n loki-toolhive-oracle-mcp &
-```
+1. Port-forward the proxy service:
+   ```bash
+   oc port-forward svc/mcp-oracle-mcp-server-proxy 8081:8080 -n loki-toolhive-oracle-mcp &
+   ```
+2. Open MCP Inspector and set the server endpoint to `http://localhost:8081`.
+3. Use the following tools:
+   - list-connections
+   - connect
+   - run-sql
 
-### **Step 2: Configure Cursor MCP**
-
-Create or update `~/.cursor/mcp.json`:
-
-```json
-{
-  "mcpServers": {
-    "oracle-database-toolhive": {
-      "command": "/path/to/cursor-toolhive-bridge.sh",
-      "args": [],
-      "env": {}
-    }
+Examples:
+- list-connections (no params)
+  ```json
+  {}
+  ```
+- connect (explicit connection)
+  ```json
+  { "connectionName": "oracle23ai_connection_demo" }
+  ```
+- run-sql (after connect)
+  ```json
+  { "sql": "select table_name from user_tables fetch first 5 rows only" }
+  ```
+- run-sql (with explicit connection)
+  ```json
+  {
+    "connectionName": "oracle23ai_connection_demo",
+    "sql": "select 1 as ok from dual"
   }
-}
-```
+  ```
 
-### **Step 3: Update Bridge Script**
+Notes:
+- Use service-style connection strings `host:port/SERVICE_NAME` (e.g., `oracle23ai.arhkp-oracle-db-tpcds-loader:1521/FREEPDB1`).
+- If you see "not connected", call `connect` again or include `connectionName` in `run-sql`.
 
-Ensure `cursor-toolhive-bridge.sh` has the correct port:
+## 📥 **Load VS Code Database Explorer connections (.dbtools)**
 
-```bash
-# Edit the bridge script
-vim cursor-toolhive-bridge.sh
+If you manage connections locally with the VS Code Oracle Database Explorer, copy the `.dbtools` folder into the pod's mounted home so the MCP server can list and use them.
 
-# Update PROXY_URL to match your port-forward
-PROXY_URL="http://localhost:8081"
-```
+1. Create destination directory in the pod:
+   ```bash
+   oc exec -n loki-toolhive-oracle-mcp oracle-mcp-server-0 -c mcp -- mkdir -p /sqlcl-home/.dbtools
+   ```
+2. Copy your local configuration into the pod:
+   ```bash
+   oc cp ~/.dbtools/. loki-toolhive-oracle-mcp/oracle-mcp-server-0:/sqlcl-home/.dbtools -c mcp
+   ```
+3. Restart the pod to reload configs:
+   ```bash
+   oc delete pod/oracle-mcp-server-0 -n loki-toolhive-oracle-mcp --wait=false
+   oc wait --for=condition=Ready pod/oracle-mcp-server-0 -n loki-toolhive-oracle-mcp --timeout=180s
+   ```
+4. Verify inside the pod:
+   ```bash
+   oc exec -n loki-toolhive-oracle-mcp oracle-mcp-server-0 -c mcp -- ls -la /sqlcl-home/.dbtools
+   ```
 
-### **Step 4: Test in Cursor**
-
-1. **Restart Cursor IDE** completely
-2. **Open a new chat** in Cursor
-3. **Test queries**:
-   - "What Oracle database tools are available?"
-   - "Show me the database schemas"
-   - "List tables in the HR schema"
+Tips:
+- Ensure `connections.json` in `.dbtools` uses a `jdbc:oracle:thin:@host:port/SERVICE` URL or provide `tns-uri` via secret.
+- The server uses thin JDBC; the "thick driver unavailable" warning is harmless.
 
 ## 🔍 **Troubleshooting**
 

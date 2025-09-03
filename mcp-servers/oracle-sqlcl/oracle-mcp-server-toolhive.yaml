@@ -11,18 +11,41 @@ spec:
   podTemplateSpec:
     metadata: {}
     spec:
+      securityContext:
+        fsGroup: 0
+        fsGroupChangePolicy: OnRootMismatch
+      volumes:
+      - name: sqlcl-data
+        persistentVolumeClaim:
+          claimName: oracle-mcp-data
+      - name: sqldeveloper-connections
+        persistentVolumeClaim:
+          claimName: oracle-mcp-connections
       containers:
       - name: mcp
         image: quay.io/lrangine/sqlcl-mcp-server:2.3.0
         env:
+        - name: HOME
+          value: "/sqlcl-home"
         - name: ORACLE_USER
-          value: "oracle23ai"
+          value: "system"
         - name: ORACLE_PASSWORD
           value: "tkX3fNXqGi1Vs3Bm7E6Ne063d"
         - name: ORACLE_CONNECTION_STRING
           value: "oracle23ai.arhkp-oracle-db-tpcds-loader:1521/FREEPDB1"
+        - name: ORACLE_HOST
+          value: "oracle23ai.arhkp-oracle-db-tpcds-loader"
+        - name: ORACLE_PORT
+          value: "1521"
+        - name: ORACLE_SERVICE_NAME
+          value: "FREEPDB1"
         - name: CONNECTION_NAME
           value: "oracle_connection_demo"
+        volumeMounts:
+        - name: sqlcl-data
+          mountPath: /sqlcl-home
+        - name: sqldeveloper-connections
+          mountPath: /sqlcl-home/.sqldeveloper
 
 
         # Custom image has MCP server as entry point
