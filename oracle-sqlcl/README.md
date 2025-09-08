@@ -103,7 +103,7 @@ vim dev-image-build.sh
 
 ### **Step 5: Configure Database Connection**
 
-Edit `oracle-mcp-server-toolhive.yaml` and update the environment variables:
+Edit `oracle-mcp-server-toolhive.yaml` and update the environment variables (these are read by the container entrypoint to create a saved connection at startup):
 
 ```yaml
 env:
@@ -113,6 +113,9 @@ env:
   value: "your_oracle_password"
 - name: ORACLE_CONNECTION_STRING
   value: "host:port/service_name"
+        # Example: "oracle23ai.arhkp-oracle-db-tpcds-loader:1521/FREEPDB1"
+- name: ORACLE_CONN_NAME
+  value: "oracle_connection_demo"  # Optional; default is "oracle_connection"
 ```
 
 **Security Note**: For production, use Kubernetes secrets instead of plain text:
@@ -186,35 +189,28 @@ Examples:
   }
   ```
 
+## 🔧 Runtime Behavior and Environment
+
+- The container entrypoint (`scripts/start-mcp.sh`) ensures:
+  - Stable writable home at `/sqlcl-home` for saved connections
+  - Writable Java temp dir at `/sqlcl-home/tmp`
+  - Profile scripts are ignored to avoid banner/interactive noise
+
+- On startup, if `ORACLE_USER`, `ORACLE_PASSWORD`, and `ORACLE_CONNECTION_STRING` are set, a saved connection is created with alias `ORACLE_CONN_NAME` (default: `oracle_connection`).
+
+### List saved connections inside the pod
+
+```bash
+sh /list-saved-connections.sh           # names only
+```
+
+If you see no connections listed, verify the env vars and check the pod logs during startup for the "Creating saved connection" message.
+
 Notes:
 - Use service-style connection strings `host:port/SERVICE_NAME` (e.g., `oracle23ai.arhkp-oracle-db-tpcds-loader:1521/FREEPDB1`).
 - If you see "not connected", call `connect` again or include `connectionName` in `run-sql`.
 
-## 📥 **Load VS Code Database Explorer connections (.dbtools)**
-
-If you manage connections locally with the VS Code Oracle Database Explorer, copy the `.dbtools` folder into the pod's mounted home so the MCP server can list and use them.
-
-1. Create destination directory in the pod:
-   ```bash
-   oc exec -n loki-toolhive-oracle-mcp oracle-mcp-server-0 -c mcp -- mkdir -p /sqlcl-home/.dbtools
-   ```
-2. Copy your local configuration into the pod:
-   ```bash
-   oc cp ~/.dbtools/. loki-toolhive-oracle-mcp/oracle-mcp-server-0:/sqlcl-home/.dbtools -c mcp
-   ```
-3. Restart the pod to reload configs:
-   ```bash
-   oc delete pod/oracle-mcp-server-0 -n loki-toolhive-oracle-mcp --wait=false
-   oc wait --for=condition=Ready pod/oracle-mcp-server-0 -n loki-toolhive-oracle-mcp --timeout=180s
-   ```
-4. Verify inside the pod:
-   ```bash
-   oc exec -n loki-toolhive-oracle-mcp oracle-mcp-server-0 -c mcp -- ls -la /sqlcl-home/.dbtools
-   ```
-
-Tips:
-- Ensure `connections.json` in `.dbtools` uses a `jdbc:oracle:thin:@host:port/SERVICE` URL or provide `tns-uri` via secret.
-- The server uses thin JDBC; the "thick driver unavailable" warning is harmless.
+ 
 
 ## 🔍 **Troubleshooting**
 
@@ -226,6 +222,9 @@ Tips:
 | Connection refused | Verify port-forward and proxy service |
 | Session expired | Bridge script handles this automatically |
 | Permission denied | Ensure SCC is applied and bound correctly |
+| Thick driver warning | Expected in thin mode; `ORACLE_HOME` is unset intentionally |
+| Read-only /tmp (Jansi .lck) | Handled by `JAVA_TOOL_OPTIONS=-Djava.io.tmpdir=/sqlcl-home/tmp` |
+| Saved connection missing | Ensure `HOME=/sqlcl-home`; use `/list-saved-connections.sh` to verify |
 | Image pull errors | Check registry credentials and image name |
 
 ### **Debugging Commands**

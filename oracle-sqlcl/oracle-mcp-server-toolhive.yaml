@@ -4,7 +4,7 @@ metadata:
   name: oracle-mcp-server
   namespace: loki-toolhive-oracle-mcp
 spec:
-  image: quay.io/lrangine/sqlcl-mcp-server:3.0.3
+  image: quay.io/lrangine/sqlcl-mcp-server:3.0.13
   permissionProfile:
     name: network
     type: builtin
@@ -20,7 +20,7 @@ spec:
           claimName: oracle-mcp-data
       containers:
       - name: mcp
-        image: quay.io/lrangine/sqlcl-mcp-server:3.0.3
+        image: quay.io/lrangine/sqlcl-mcp-server:3.0.13
         env:
         - name: HOME
           value: "/sqlcl-home"
@@ -29,13 +29,13 @@ spec:
         - name: _JAVA_OPTIONS
           value: ""
         - name: ORACLE_USER
-          value: "system"
+          value: "sales"
         - name: ORACLE_PASSWORD
-          value: "tkX3fNXqGi1Vs3Bm7E6Ne063d"
+          value: "7uIbZm4q7qkmkdkG"
         - name: ORACLE_CONNECTION_STRING
-          value: "oracle23ai.arhkp-oracle-db-tpcds-loader:1521/FREEPDB1"
+          value: "jdbc:oracle:thin:@oracle23ai.arhkp-oracle-db-tpcds-loader:1521/FREEPDB1"
         - name: ORACLE_CONN_NAME
-          value: "oracle_connection_demo"
+          value: "oracle_connection_demo1"
         volumeMounts:
         - name: sqlcl-data
           mountPath: /sqlcl-home

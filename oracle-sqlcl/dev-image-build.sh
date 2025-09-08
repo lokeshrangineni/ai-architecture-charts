@@ -6,7 +6,7 @@ set -e
 
 # Configuration
 IMAGE_NAME="sqlcl-mcp-server"
-TAG="3.0.3"
+TAG="3.0.13"
 QUAY_REPO="quay.io/lrangine"
 
 echo "Building SQLcl MCP Server with verbose logging..."
