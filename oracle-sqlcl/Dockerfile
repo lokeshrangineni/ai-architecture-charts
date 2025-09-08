@@ -31,6 +31,14 @@ RUN echo '#!/bin/bash' > /start-mcp.sh && \
     echo '  echo "connect -list" | /opt/oracle/sqlcl/bin/sql /NOLOG > /tmp/sqlcl_list.txt 2>/dev/null || true' >> /start-mcp.sh && \
     echo '  if grep -q "$CONNECTION_ALIAS" /tmp/sqlcl_list.txt; then echo "Saved connection present: $CONNECTION_ALIAS"; else echo "Saved connection NOT found in -list output"; fi' >> /start-mcp.sh && \
     echo '  touch /sqlcl-home/.startup_saved_connection || true' >> /start-mcp.sh && \
+    echo '  # Synthesize a VS Code .dbtools connection for MCP list-connections' >> /start-mcp.sh && \
+    echo '  mkdir -p /sqlcl-home/.dbtools /sqlcl-home/.dbtools/connections || true' >> /start-mcp.sh && \
+    echo '  DBTOOLS_CONN_FILE="/sqlcl-home/.dbtools/connections/${CONNECTION_ALIAS}.json"' >> /start-mcp.sh && \
+    echo '  echo "Writing .dbtools connection to $DBTOOLS_CONN_FILE"' >> /start-mcp.sh && \
+    echo '  printf "%s\n" \\\n+      "{" \\\n+      "  \"name\": \"$CONNECTION_ALIAS\"," \\\n+      "  \"type\": \"oracle\"," \\\n+      "  \"connectString\": \"$ORACLE_CONNECTION_STRING\"," \\\n+      "  \"user\": \"$ORACLE_USER\"" \\\n+      "}" > "$DBTOOLS_CONN_FILE"' >> /start-mcp.sh && \
+    echo '  # Optional index file used by some tools' >> /start-mcp.sh && \
+    echo '  DBTOOLS_INDEX_FILE="/sqlcl-home/.dbtools/connections.json"' >> /start-mcp.sh && \
+    echo '  printf "%s\n" \\\n+      "[" \\\n+      "  {" \\\n+      "    \"name\": \"$CONNECTION_ALIAS\"," \\\n+      "    \"type\": \"oracle\"," \\\n+      "    \"connectString\": \"$ORACLE_CONNECTION_STRING\"," \\\n+      "    \"user\": \"$ORACLE_USER\"" \\\n+      "  }" \\\n+      "]" > "$DBTOOLS_INDEX_FILE"' >> /start-mcp.sh && \
     echo 'else' >> /start-mcp.sh && \
     echo '  echo "Skipping saved connection creation; missing ORACLE_USER/ORACLE_PASSWORD/ORACLE_CONNECTION_STRING"' >> /start-mcp.sh && \
     echo 'fi' >> /start-mcp.sh && \
