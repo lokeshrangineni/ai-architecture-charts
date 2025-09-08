@@ -5,9 +5,9 @@
 set -e
 
 # Configuration
-IMAGE_NAME="sqlcl-mcp-server"
-TAG="2.5.0"
-QUAY_REPO="quay.io/lrangine"
+IMAGE_NAME="oracle-sqlcl-mcp-server"
+TAG="1.0.0"
+QUAY_REPO="quay.io/ecosystem-appeng"
 
 echo "Building SQLcl MCP Server with verbose logging..."
 
