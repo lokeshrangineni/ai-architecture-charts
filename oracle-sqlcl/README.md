@@ -28,7 +28,7 @@ Cursor IDE → Bridge Script → Port-Forward → Toolhive Proxy → Oracle MCP 
 | File | Purpose |
 |------|---------|
 | `Dockerfile` | Container image definition for Oracle SQLcl MCP server |
-| `build.sh` | Script to build and push the container image |
+| `dev-image-build.sh` | Script to build and push the container image |
 | `oracle-mcp-server-toolhive.yaml` | **Main Toolhive CRD** - defines the MCP server |
 | `toolhive-oracle-scc.yaml` | Security Context Constraints for OpenShift |
 | `README.md` | This documentation |
@@ -89,15 +89,15 @@ oc get scc toolhive-oracle-scc
 ### **Step 4: Build and Push Container Image**
 
 ```bash
-# Update build.sh with your registry details
-vim build.sh
+# Update dev-image-build.sh with your registry details
+vim dev-image-build.sh
 
 # Build and push the image
-./build.sh
+./dev-image-build.sh
 ```
 
-**Edit `build.sh` to configure:**
-- `REGISTRY`: Your container registry URL
+**Edit `dev-image-build.sh` to configure:**
+- `QUAY_REPO`: Your container registry URL
 - `IMAGE_NAME`: Your image name
 - `TAG`: Version tag
 
