@@ -4,7 +4,7 @@ metadata:
   name: oracle-mcp-server
   namespace: loki-toolhive-oracle-mcp
 spec:
-  image: quay.io/ecosystem-appeng/oracle-sqlcl-mcp-server:1.0.0
+  image: quay.io/lrangine/sqlcl-mcp-server:3.0.0
   permissionProfile:
     name: network
     type: builtin
@@ -20,7 +20,7 @@ spec:
           claimName: oracle-mcp-data
       containers:
       - name: mcp
-        image: quay.io/ecosystem-appeng/oracle-sqlcl-mcp-server:1.0.0
+        image: quay.io/lrangine/sqlcl-mcp-server:3.0.0
         env:
         - name: HOME
           value: "/sqlcl-home"
