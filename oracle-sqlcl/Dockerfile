@@ -21,6 +21,14 @@ RUN echo '#!/bin/bash' > /start-mcp.sh && \
     echo 'echo "SQLcl Debug: $SQLCL_DEBUG"' >> /start-mcp.sh && \
     echo 'echo "Starting MCP Server for Toolhive proxy access..."' >> /start-mcp.sh && \
     echo 'echo "Enabling verbose output for MCP operations..."' >> /start-mcp.sh && \
+    echo '# Create a saved SQLcl connection if env vars provided' >> /start-mcp.sh && \
+    echo 'if [ -n "$ORACLE_USER" ] && [ -n "$ORACLE_PASSWORD" ] && [ -n "$ORACLE_CONNECTION_STRING" ]; then' >> /start-mcp.sh && \
+    echo '  CONNECTION_ALIAS=${ORACLE_CONN_NAME:-oracle_connection}' >> /start-mcp.sh && \
+    echo '  echo "Creating saved connection: $CONNECTION_ALIAS"' >> /start-mcp.sh && \
+    echo '  echo "connect -savepwd -save $CONNECTION_ALIAS ${ORACLE_USER}/${ORACLE_PASSWORD}@${ORACLE_CONNECTION_STRING}" | sql /NOLOG' >> /start-mcp.sh && \
+    echo 'else' >> /start-mcp.sh && \
+    echo '  echo "Skipping saved connection creation; missing ORACLE_USER/ORACLE_PASSWORD/ORACLE_CONNECTION_STRING"' >> /start-mcp.sh && \
+    echo 'fi' >> /start-mcp.sh && \
     echo '# Start SQLcl MCP with verbose logging' >> /start-mcp.sh && \
     echo 'exec /opt/oracle/sqlcl/bin/sql -mcp' >> /start-mcp.sh && \
     chmod +x /start-mcp.sh
