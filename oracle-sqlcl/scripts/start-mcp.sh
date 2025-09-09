@@ -34,7 +34,7 @@ if [ -n "$ORACLE_USER" ] && [ -n "$ORACLE_PASSWORD" ] && [ -n "$ORACLE_CONNECTIO
   echo "Creating saved connection: $CONNECTION_ALIAS"
   echo "connect -savepwd -save $CONNECTION_ALIAS ${ORACLE_USER}/${ORACLE_PASSWORD}@${ORACLE_CONNECTION_STRING}" | /opt/oracle/sqlcl/bin/sql /NOLOG || true
 else
-  echo "Skipping saved connection creation; missing ORACLE_USER/ORACLE_PASSWORD/ORACLE_CONNECTION_STRING"
+  echo "Skipping saved connection creation; missing ORACLE_USER/ORACLE_PASSWORD/ORACLE_CONNECTION_STRING environment variables"
 fi
 
 # Start SQLcl MCP 
