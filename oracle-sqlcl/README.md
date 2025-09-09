@@ -27,7 +27,7 @@ Cursor IDE → Bridge Script → Port-Forward → Toolhive Proxy → Oracle MCP 
 
 | File | Purpose |
 |------|---------|
-| `Dockerfile` | Container image definition for Oracle SQLcl MCP server |
+| `Containerfile` | Container image definition for Oracle SQLcl MCP server |
 | `dev-image-build.sh` | Script to build and push the container image |
 | `oracle-mcp-server-toolhive.yaml` | **Main Toolhive CRD** - defines the MCP server |
 | `toolhive-oracle-scc.yaml` | Security Context Constraints for OpenShift |
