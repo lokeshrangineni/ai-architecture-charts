@@ -1,15 +1,5 @@
 mcp-servers:
-  mcp-test-client:
-    deploy: true
-    imageRepository: python:3.11-slim
-    uri: http://mcp-test-client:8000/sse
-    serviceType: ClusterIP
-    servicePort: 8000
-    replicaCount: 1
-    resources:
-      requests:
-        memory: "256Mi"
-        cpu: "250m"
-      limits:
-        memory: "512Mi"
-        cpu: "500m"
+  mcp-weather:
+    deploy: false
+    imageRepository: quay.io/ecosystem-appeng/mcp-weather
+    uri: http://mcp-weather:8000/sse
