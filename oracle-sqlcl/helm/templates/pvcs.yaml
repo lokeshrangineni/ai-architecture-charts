@@ -1,0 +1,40 @@
+{{- if and .Values.persistence.data.enabled (not .Values.persistence.data.existingClaim) }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "oracle-sqlcl-mcp.fullname" . }}-data
+  labels:
+    {{- include "oracle-sqlcl-mcp.labels" . | nindent 4 }}
+spec:
+  accessModes:
+{{- range .Values.persistence.data.accessModes }}
+  - {{ . | quote }}
+{{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.data.size }}
+  {{- if .Values.persistence.data.storageClassName }}
+  storageClassName: {{ .Values.persistence.data.storageClassName }}
+  {{- end }}
+{{- end }}
+
+{{- if and .Values.persistence.connections.enabled (not .Values.persistence.connections.existingClaim) }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "oracle-sqlcl-mcp.fullname" . }}-connections
+  labels:
+    {{- include "oracle-sqlcl-mcp.labels" . | nindent 4 }}
+spec:
+  accessModes:
+{{- range .Values.persistence.connections.accessModes }}
+  - {{ . | quote }}
+{{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.connections.size }}
+  {{- if .Values.persistence.connections.storageClassName }}
+  storageClassName: {{ .Values.persistence.connections.storageClassName }}
+  {{- end }}
+{{- end }}

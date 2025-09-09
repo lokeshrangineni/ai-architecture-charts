@@ -31,9 +31,9 @@ spec:
         - name: ORACLE_USER
           value: "sales"
         - name: ORACLE_PASSWORD
-          value: "7uIbZm4q7qkmkdkG"
+          value: ""
         - name: ORACLE_CONNECTION_STRING
-          value: "jdbc:oracle:thin:@oracle23ai.arhkp-oracle-db-tpcds-loader:1521/FREEPDB1"
+          value: "jdbc:oracle:thin:@<oracle-k8-service-name>:1521/FREEPDB1"
         - name: ORACLE_CONN_NAME
           value: "oracle_connection_demo1"
         volumeMounts:
