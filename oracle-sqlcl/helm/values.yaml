@@ -43,13 +43,6 @@ persistence:
     accessModes:
       - ReadWriteOnce
     mountPath: /sqlcl-home
-  connections:
-    enabled: false
-    existingClaim: ""
-    size: 100Mi
-    storageClassName: ""
-    accessModes:
-      - ReadWriteOnce
 
 env:
   ORACLE_USER: "sales"

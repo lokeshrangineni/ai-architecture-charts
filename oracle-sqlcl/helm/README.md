@@ -25,7 +25,6 @@ helm upgrade --install oracle-sqlcl ./oracle-sqlcl/helm -n toolhive-oracle-mcp \
 
 ### Storage
 - Data PVC for SQLcl HOME: enabled by default (`persistence.data`)
-- Optional connections PVC: disabled by default (`persistence.connections`)
 
 ### OpenShift SCC (optional)
 Enable and bind SCC to the ServiceAccount:
@@ -39,7 +38,7 @@ helm upgrade --install oracle-sqlcl ./oracle-sqlcl/helm -n toolhive-oracle-mcp \
 - `image.repository`, `image.tag`, `image.pullPolicy`
 - `permissionProfile.name`, `permissionProfile.type`
 - `serviceAccount.create`, `serviceAccount.name`
-- `persistence.data.*`, `persistence.connections.*`
+- `persistence.data.*`
 - `env.*` (used for Secret when `secret.enabled=true`)
 - `rbac.scc.enabled`, `rbac.scc.name`
 
