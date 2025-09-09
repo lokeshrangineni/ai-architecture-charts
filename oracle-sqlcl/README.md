@@ -15,12 +15,11 @@ This implementation uses **Toolhive** to manage the MCP server deployment and pr
 ## 🏗️ **Architecture**
 
 ```
-Cursor IDE → Bridge Script → Port-Forward → Toolhive Proxy → Oracle MCP Server → Oracle Database
+Client → Port-Forward → Toolhive Proxy → Oracle MCP Server → Oracle Database
 ```
 
 - **Oracle MCP Server**: SQLcl-based container running MCP protocol over stdio
 - **Toolhive Proxy**: Converts stdio to HTTP/SSE for web access
-- **Bridge Script**: Handles session management between Cursor and Toolhive
 - **OpenShift**: Container orchestration platform
 
 ## 📁 **Files in this Directory**
@@ -29,64 +28,25 @@ Cursor IDE → Bridge Script → Port-Forward → Toolhive Proxy → Oracle MCP 
 |------|---------|
 | `Containerfile` | Container image definition for Oracle SQLcl MCP server |
 | `dev-image-build.sh` | Script to build and push the container image |
-| `oracle-mcp-server-toolhive.yaml` | **Main Toolhive CRD** - defines the MCP server |
-| `toolhive-oracle-scc.yaml` | Security Context Constraints for OpenShift |
+| `helm/` | Helm chart to deploy the MCP server on OpenShift |
 | `README.md` | This documentation |
 
 ## 🚀 **Prerequisites**
 
 ### **OpenShift Cluster**
 - OpenShift 4.x cluster with admin access
-- `oc` CLI tool installed and configured
-- Access to create namespaces, CRDs, and security policies
-
-### **Toolhive Installation**
-- Toolhive operator installed on the cluster
-- Toolhive CRDs available (`toolhive.stacklok.dev/v1alpha1`)
+- `helm` CLI installed and configured to target your cluster
+- Access to create namespaces and security policies
 
 ### **Container Registry**
 - Access to a container registry (e.g., Quay.io, Docker Hub)
-- Registry credentials configured in OpenShift
+- Registry credentials configured in the cluster if pulling private images
 
 ### **Oracle Database**
 - Oracle database accessible from OpenShift cluster
 - Database credentials (username, password, connection string)
 
-## 📦 **Installation Steps**
-
-### **Step 1: Install Toolhive Operator**
-
-If Toolhive is not already installed:
-
-```bash
-# Install Toolhive operator (cluster admin required)
-oc apply -f https://github.com/stacklok/toolhive/releases/latest/download/toolhive-operator.yaml
-
-# Verify installation
-oc get pods -n toolhive-system
-```
-
-### **Step 2: Create Namespace**
-
-```bash
-# Create namespace for the MCP server
-oc new-project loki-toolhive-oracle-mcp
-
-# Or use existing namespace
-oc project loki-toolhive-oracle-mcp
-```
-
-### **Step 3: Apply Security Context Constraints**
-
-```bash
-# Apply SCC (cluster admin required)
-oc apply -f toolhive-oracle-scc.yaml
-
-# Verify SCC is created
-oc get scc toolhive-oracle-scc
-```
-
-### **Step 4: Build and Push Container Image**
+## 📦 **Build and Push Container Image**
 
 ```bash
 # Update dev-image-build.sh with your registry details
@@ -101,68 +61,26 @@ vim dev-image-build.sh
 - `IMAGE_NAME`: Your image name
 - `TAG`: Version tag
 
-### **Step 5: Configure Database Connection**
-
-Edit `oracle-mcp-server-toolhive.yaml` and update the environment variables (these are read by the container entrypoint to create a saved connection at startup):
-
-```yaml
-env:
-- name: ORACLE_USER
-  value: "your_oracle_user"
-- name: ORACLE_PASSWORD  
-  value: "your_oracle_password"
-- name: ORACLE_CONNECTION_STRING
-  value: "host:port/service_name"
-        # Example: "oracle23ai.arhkp-oracle-db-tpcds-loader:1521/FREEPDB1"
-- name: ORACLE_CONN_NAME
-  value: "oracle_connection_demo"  # Optional; default is "oracle_connection"
-```
-
-**Security Note**: For production, use Kubernetes secrets instead of plain text:
-
-```yaml
-env:
-- name: ORACLE_PASSWORD
-  valueFrom:
-    secretKeyRef:
-      name: oracle-credentials
-      key: password
-```
-
-### **Step 6: Deploy MCP Server**
+Alternatively, you can build manually:
 
 ```bash
-# Deploy the Toolhive MCP server
-oc apply -f oracle-mcp-server-toolhive.yaml
-
-# Verify deployment
-oc get mcpserver oracle-mcp-server
-oc get pods -l toolhive-name=oracle-mcp-server
+docker build -f Containerfile -t <your_repo>/oracle-sqlcl-mcp-server:<tag> .
+docker push <your_repo>/oracle-sqlcl-mcp-server:<tag>
 ```
 
-### **Step 7: Verify Deployment**
+## 🧭 **Deploy with Helm**
 
-```bash
-# Check MCP server pod
-oc logs oracle-mcp-server-0
+For installation and configuration, see the Helm chart documentation:
 
-# Check Toolhive proxy pod  
-oc logs -l app=mcpserver
-
-# Test connectivity
-oc port-forward svc/mcp-oracle-mcp-server-proxy 8081:8080 &
-curl -s http://localhost:8081/sse | head -3
-```
+- oracle-sqlcl/helm/README.md
 
 ## 🧪 **Test with MCP Inspector**
 
 You can use MCP Inspector to interactively test the MCP server over HTTP via the Toolhive proxy.
 
-1. Port-forward the proxy service:
-   ```bash
-   oc port-forward svc/mcp-oracle-mcp-server-proxy 8081:8080 -n loki-toolhive-oracle-mcp &
-   ```
-2. Open MCP Inspector and set the server endpoint to `http://localhost:8081`.
+1. Follow the Helm README to deploy.
+2. Port-forward the proxy service per Helm deployment notes.
+3. Open MCP Inspector and set the server endpoint to `http://localhost:8081/sse`.
 3. Use the following tools:
    - list-connections
    - connect
@@ -239,9 +157,6 @@ oc logs -l app=mcpserver -f
 # Check pod status
 oc describe pod oracle-mcp-server-0
 
-# Test bridge script manually
-echo '{"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}}' | ./cursor-toolhive-bridge.sh
-
 # Check Toolhive resources
 oc get mcpserver
 oc describe mcpserver oracle-mcp-server
@@ -251,7 +166,6 @@ oc describe mcpserver oracle-mcp-server
 
 - **MCP Server**: `oc logs oracle-mcp-server-0`
 - **Toolhive Proxy**: `oc logs -l app=mcpserver`
-- **Bridge Script**: Outputs to stderr when running
 
 ## 🔒 **Security Considerations**
 
