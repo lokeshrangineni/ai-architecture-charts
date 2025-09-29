@@ -1,7 +1,7 @@
 {{- $root := . }}
 {{- $servers := include "mcp-servers.mergeMcpServers" . | fromJson }}
 {{- range $key, $server := $servers }}
-{{- if and $server.mcpserver $server.mcpserver.enabled }}
+{{- if $server.enabled }}
 {{- $serverDict := dict "root" $root "key" $key "server" $server }}
 ---
 apiVersion: toolhive.stacklok.dev/v1alpha1
@@ -11,10 +11,10 @@ metadata:
   labels:
     {{- include "mcp-servers.labels" $serverDict | nindent 4 }}
 spec:
-  image: "{{ $server.imageRepository }}:{{ $server.imageTag | default $root.Chart.AppVersion }}"
+  image: "{{ $server.image }}"
   permissionProfile:
-    name: {{ $server.mcpserver.permissionProfile.name | default "network" }}
-    type: {{ $server.mcpserver.permissionProfile.type | default "builtin" }}
+    name: {{ $server.permissionProfile.name | default "network" }}
+    type: {{ $server.permissionProfile.type | default "builtin" }}
   podTemplateSpec:
     metadata: {}
     spec:
@@ -23,17 +23,34 @@ spec:
       securityContext:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with $server.volumes }}
       volumes:
+      {{- if and $server.persistence $server.persistence.enabled }}
+      - name: {{ $server.persistence.volumeName | default "data" }}
+        ephemeral:
+          volumeClaimTemplate:
+            metadata:
+              labels:
+                {{- include "mcp-servers.labels" $serverDict | nindent 16 }}
+            spec:
+              accessModes:
+                - {{ $server.persistence.accessMode }}
+              resources:
+                requests:
+                  storage: {{ $server.persistence.size }}
+              {{- if $server.persistence.storageClassName }}
+              storageClassName: {{ $server.persistence.storageClassName }}
+              {{- end }}
+      {{- end }}
+      {{- with $server.volumes }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
       containers:
-      - name: mcp        
-        image: "{{ $server.imageRepository }}:{{ $server.imageTag | default $root.Chart.AppVersion }}"
+      - name: mcp
+        image: "{{ $server.image }}"
         imagePullPolicy: {{ $server.imagePullPolicy | default "IfNotPresent" }}
-        {{- if or $server.mcpserver.env $server.mcpserver.envSecrets }}
+        {{- if or $server.env $server.envSecrets }}
         env:
-        {{- with $server.mcpserver.env }}
+        {{- with $server.env }}
         {{- range $envKey, $envValue := . }}
         {{- if ne $envValue nil }}
         - name: {{ $envKey }}
@@ -41,7 +58,7 @@ spec:
         {{- end }}
         {{- end }}
         {{- end }}
-        {{- with $server.mcpserver.envSecrets }}
+        {{- with $server.envSecrets }}
         {{- range $envKey, $secretSpec := . }}
         - name: {{ $envKey }}
           valueFrom:
@@ -63,7 +80,10 @@ spec:
         securityContext:
           {{- toYaml . | nindent 10 }}
         {{- end }}
-  port: {{ $server.mcpserver.port | default 8080 }}
-  transport: {{ $server.mcpserver.transport | default "stdio" }}
+  port: {{ $server.port | default 8080 }}
+  {{- if $server.targetPort }}
+  targetPort: {{ $server.targetPort }}
+  {{- end }}
+  transport: {{ $server.transport | default "stdio" }}
 {{- end }}
 {{- end }}
